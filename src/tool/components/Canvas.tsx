@@ -1,86 +1,185 @@
-import React from 'react';
-import { ToolState } from '../types';
+'use client';
+
+import React, { Fragment, useMemo } from 'react';
+import type { DiffMode, LineChange, ToolState, WordSpan } from '../types';
+import { computeStats, diffLines, diffWords, toUnifiedDiffText, toInlineText } from '../diff';
 
 interface CanvasProps {
   state: ToolState;
   onChange: (state: ToolState) => void;
+  canvasRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export const Canvas: React.FC<CanvasProps> = ({ state, onChange }) => {
-  const handleInput = (val: string) => {
-    const newState = { ...state, input: val };
-    onChange(newState);
-  };
+const spanClass: Record<WordSpan['type'], string> = {
+  equal: '',
+  inserted: 'bg-green-200 text-green-900 dark:bg-green-900/60 dark:text-green-100 rounded px-0.5',
+  deleted: 'bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100 rounded px-0.5',
+};
 
-  const copyOutput = () => {
-    navigator.clipboard.writeText(state.output);
-  };
+const lineClass: Record<LineChange['type'], string> = {
+  added: 'bg-green-50 dark:bg-green-950/40',
+  removed: 'bg-red-50 dark:bg-red-950/40',
+  unchanged: '',
+};
 
-  const downloadOutput = () => {
-    const ext = state.mode === 'yaml-to-json' ? 'json' : 'yaml';
-    const blob = new Blob([state.output], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `converted.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
+function WordDiffView({ original, modified }: { original: string; modified: string }) {
+  const spans = useMemo(() => diffWords(original, modified), [original, modified]);
+  return (
+    <div className="prose-sm font-mono whitespace-pre-wrap break-words text-sm leading-6 flex-1 overflow-auto p-3">
+      {spans.map((span, idx) => (
+        <span key={idx} className={spanClass[span.type]}>
+          {span.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function LineDiffView({ original, modified }: { original: string; modified: string }) {
+  const changes = useMemo(() => diffLines(original, modified), [original, modified]);
+  return (
+    <div className="flex-1 overflow-auto font-mono text-sm leading-6" role="list" aria-label="Line diff">
+      {changes.map((change, idx) => (
+        <div
+          key={idx}
+          role="listitem"
+          className={`flex gap-2 px-2 ${lineClass[change.type]}`}
+          data-change={change.type}
+        >
+          <span className="w-10 shrink-0 text-right text-gray-400 select-none">
+            {change.lineNumberOriginal ?? ''}
+          </span>
+          <span className="w-10 shrink-0 text-right text-gray-400 select-none">
+            {change.lineNumberModified ?? ''}
+          </span>
+          <span className="w-4 shrink-0 text-center select-none">
+            {change.type === 'added' ? '+' : change.type === 'removed' ? '−' : ''}
+          </span>
+          <span className="whitespace-pre-wrap break-words flex-1">{change.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InlineDiffView({ original, modified }: { original: string; modified: string }) {
+  const spans = useMemo(() => diffWords(original, modified), [original, modified]);
+  return (
+    <div className="prose-sm font-mono whitespace-pre-wrap break-words text-sm leading-6 flex-1 overflow-auto p-3">
+      {spans.map((span, idx) => (
+        <Fragment key={idx}>
+          <span className={spanClass[span.type]}>{span.text}</span>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+export function TextDiffCanvas({ state, onChange, canvasRef }: CanvasProps) {
+  const stats = useMemo(() => computeStats(state.original, state.modified), [state.original, state.modified]);
+  const unified = useMemo(() => toUnifiedDiffText(state.original, state.modified), [state.original, state.modified]);
+  const inlineText = useMemo(() => toInlineText(state.original, state.modified), [state.original, state.modified]);
+
+  const copyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    void label;
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-            Input ({state.mode === 'yaml-to-json' ? 'YAML' : 'JSON'})
-          </label>
+    <div ref={canvasRef} className="flex flex-col h-full p-4 gap-4 overflow-hidden">
+      {/* Input panes: side-by-side original + modified */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[30%]">
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              Original
+            </label>
+            <span className="text-xs text-gray-500">
+              {stats.unchangedPercentageOriginal}% unchanged
+            </span>
+          </div>
+          <textarea
+            value={state.original}
+            onChange={(e) => onChange({ ...state, original: e.target.value })}
+            placeholder="Enter original text..."
+            className="w-full h-28 md:h-auto md:flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 font-mono text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            spellCheck={false}
+            aria-label="Original text"
+          />
         </div>
-        <textarea
-          value={state.input}
-          onChange={(e) => handleInput(e.target.value)}
-          placeholder={`Enter ${state.mode === 'yaml-to-json' ? 'YAML' : 'JSON'} here...`}
-          className="flex-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 font-mono text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-          spellCheck={false}
-        />
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              Modified
+            </label>
+            <span className="text-xs text-gray-500">
+              {stats.unchangedPercentageModified}% unchanged
+            </span>
+          </div>
+          <textarea
+            value={state.modified}
+            onChange={(e) => onChange({ ...state, modified: e.target.value })}
+            placeholder="Enter modified text..."
+            className="w-full h-28 md:h-auto md:flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 font-mono text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            spellCheck={false}
+            aria-label="Modified text"
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-            Output ({state.mode === 'yaml-to-json' ? 'JSON' : 'YAML'})
-          </label>
-          {state.output && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={copyOutput}
-                className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-              >
-                Copy
-              </button>
-              <button
-                onClick={downloadOutput}
-                className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-              >
-                Download
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="relative flex-1 flex flex-col h-full">
-          <textarea
-            value={state.output}
-            readOnly
-            placeholder="Converted output will appear here..."
-            className="flex-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 font-mono text-xs text-gray-900 dark:text-gray-100 focus:outline-none resize-none"
-            spellCheck={false}
-          />
-          {state.error && (
-            <div className="absolute bottom-3 left-3 right-3 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 px-3 py-2 rounded text-xs">
-              {state.error}
-            </div>
-          )}
+      {/* Stats bar */}
+      <div className="flex flex-wrap items-center gap-4 text-xs text-gray-700 dark:text-gray-300">
+        <span className="px-2 py-1 rounded bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200">
+          +{stats.addedWords} added
+        </span>
+        <span className="px-2 py-1 rounded bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200">
+          −{stats.removedWords} removed
+        </span>
+        <span className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
+          {stats.unchangedWords} unchanged
+        </span>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => copyText(unified, 'unified')}
+            className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Copy unified diff
+          </button>
+          <button
+            onClick={() => copyText(inlineText, 'inline')}
+            className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Copy inline result
+          </button>
         </div>
       </div>
+
+      {/* Diff views */}
+      {state.mode === 'inline' ? (
+        <div className="flex flex-col flex-1 min-h-0 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
+          <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+            Inline comparison
+          </div>
+          <InlineDiffView original={state.original} modified={state.modified} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 flex-1 min-h-0 gap-4 overflow-hidden">
+          <div className="flex flex-col min-h-0 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
+            <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              Word diff
+            </div>
+            <WordDiffView original={state.original} modified={state.modified} />
+          </div>
+          <div className="flex flex-col min-h-0 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
+            <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              Line-by-line
+            </div>
+            <LineDiffView original={state.original} modified={state.modified} />
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
+
+export type { DiffMode };

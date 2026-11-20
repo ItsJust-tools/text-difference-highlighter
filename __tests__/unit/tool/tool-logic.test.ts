@@ -1,29 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { notepadTool } from '@/tool/notepad-state';
-import type { NotepadState } from '@/tool/notepad-state';
+import { textDiffTool } from '@/tool/tool-definition';
+import type { ToolState } from '@/tool/types';
 
-describe('Notepad logic', () => {
-  it('initializes with default state', () => {
-    expect(notepadTool.initialState.content).toBe('');
+describe('Text diff logic', () => {
+  it('initializes with empty state', () => {
+    expect(textDiffTool.initialState.original).toBe('');
+    expect(textDiffTool.initialState.modified).toBe('');
+    expect(textDiffTool.initialState.mode).toBe('side-by-side');
   });
 
-  it('updates text content', () => {
-    const state = { ...notepadTool.initialState, content: 'Hello world' };
-    expect(state.content).toBe('Hello world');
+  it('updates text state', () => {
+    const state: ToolState = { ...textDiffTool.initialState, original: 'Hello world' };
+    expect(state.original).toBe('Hello world');
   });
 });
 
-describe('Notepad deserialize', () => {
-  it('accepts valid notepad state object', () => {
-    const result = notepadTool.deserialize({ content: 'Valid' });
+describe('Text diff deserialize', () => {
+  it('accepts valid state object', () => {
+    const result = textDiffTool.deserialize({ original: 'a', modified: 'b', mode: 'inline' });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.content).toBe('Valid');
+      expect(result.data).toEqual({ original: 'a', modified: 'b', mode: 'inline' });
     }
   });
 
   it('rejects null data', () => {
-    const result = notepadTool.deserialize(null);
+    const result = textDiffTool.deserialize(null);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toContain('Invalid data');
@@ -31,23 +33,23 @@ describe('Notepad deserialize', () => {
   });
 
   it('rejects non-object data', () => {
-    const result = notepadTool.deserialize('string');
+    const result = textDiffTool.deserialize('string');
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toContain('Invalid data');
     }
   });
 
-  it('rejects object without content', () => {
-    const result = notepadTool.deserialize({ title: 'No content' });
+  it('rejects object without texts', () => {
+    const result = textDiffTool.deserialize({ mode: 'side-by-side' });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toContain('Invalid data');
     }
   });
 
-  it('rejects object with non-string content', () => {
-    const result = notepadTool.deserialize({ content: 123 });
+  it('rejects invalid mode', () => {
+    const result = textDiffTool.deserialize({ original: 'a', modified: 'b', mode: 'other' });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toContain('Invalid data');
@@ -55,10 +57,10 @@ describe('Notepad deserialize', () => {
   });
 
   it('round-trips state through serialize/deserialize', () => {
-    const state: NotepadState = { content: 'Test', title: 'My note' };
-    const json = notepadTool.serialize(state);
+    const state: ToolState = { original: 'Test', modified: 'Test two', mode: 'inline' };
+    const json = textDiffTool.serialize(state);
     expect(() => JSON.parse(json)).not.toThrow();
-    const result = notepadTool.deserialize(JSON.parse(json));
+    const result = textDiffTool.deserialize(JSON.parse(json));
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data).toEqual(state);

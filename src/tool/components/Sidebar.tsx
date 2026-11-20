@@ -1,40 +1,61 @@
+'use client';
+
 import React from 'react';
-import { ToolState } from '../types';
+import type { ToolState } from '../types';
+import { computeStats, toInlineText, toUnifiedDiffText } from '../diff';
+import { SAMPLE_MODIFIED, SAMPLE_ORIGINAL } from '../types';
 
 interface SidebarProps {
   state: ToolState;
   onChange: (state: ToolState) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ state, onChange }) => {
+export function TextDiffSidebar({ state, onChange }: SidebarProps) {
+  const stats = computeStats(state.original, state.modified);
+
   return (
     <div className="p-4 space-y-6 text-sm bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-full overflow-y-auto">
       <div>
-        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Settings</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Indentation Spaces
-            </label>
-            <select
-              value={state.indent}
-              onChange={(e) => onChange({ ...state, indent: Number(e.target.value) })}
-              className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100"
-            >
-              <option value={2}>2 spaces</option>
-              <option value={4}>4 spaces</option>
-            </select>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Statistics</h3>
+        <dl className="space-y-1.5 text-xs">
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Added words</dt>
+            <dd className="font-mono text-green-700 dark:text-green-400">+{stats.addedWords}</dd>
           </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Removed words</dt>
+            <dd className="font-mono text-red-700 dark:text-red-400">−{stats.removedWords}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Unchanged words</dt>
+            <dd className="font-mono text-gray-700 dark:text-gray-300">{stats.unchangedWords}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Original unchanged</dt>
+            <dd className="font-mono text-gray-700 dark:text-gray-300">{stats.unchangedPercentageOriginal}%</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Modified unchanged</dt>
+            <dd className="font-mono text-gray-700 dark:text-gray-300">{stats.unchangedPercentageModified}%</dd>
+          </div>
+        </dl>
+      </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Auto-convert</span>
-            <input
-              type="checkbox"
-              checked={state.autoConvert}
-              onChange={(e) => onChange({ ...state, autoConvert: e.target.checked })}
-              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-          </div>
+      <div>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Export</h3>
+        <div className="space-y-2">
+          <button
+            onClick={() => navigator.clipboard.writeText(toUnifiedDiffText(state.original, state.modified))}
+            className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Copy result as unified diff text
+          </button>
+          <button
+            onClick={() => navigator.clipboard.writeText(toInlineText(state.original, state.modified))}
+            className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Copy inline annotated result
+          </button>
         </div>
       </div>
 
@@ -42,27 +63,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ state, onChange }) => {
         <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Samples</h3>
         <div className="space-y-2">
           <button
-            onClick={() => onChange({
-              ...state,
-              mode: 'yaml-to-json',
-              input: 'server:\n  host: localhost\n  port: 8080\n  enabled: true\ndatabase:\n  url: postgres://localhost/db',
-            })}
+            onClick={() => onChange({ ...state, original: SAMPLE_ORIGINAL, modified: SAMPLE_MODIFIED })}
             className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            Sample YAML Config
+            Load sample text
           </button>
           <button
-            onClick={() => onChange({
-              ...state,
-              mode: 'json-to-yaml',
-              input: '{\n  "users": [\n    { "id": 1, "name": "Alice" },\n    { "id": 2, "name": "Bob" }\n  ]\n}',
-            })}
+            onClick={() => onChange({ ...state, original: '', modified: '' })}
             className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            Sample JSON Data
+            Clear both texts
           </button>
         </div>
       </div>
+
+      <div>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Legend</h3>
+        <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+          <li><span className="inline-block px-1 rounded bg-green-200 text-green-900 dark:bg-green-900/60 dark:text-green-100">green</span> — inserted in modified text</li>
+          <li><span className="inline-block px-1 rounded bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100">red</span> — deleted from original text</li>
+        </ul>
+      </div>
     </div>
   );
-};
+}

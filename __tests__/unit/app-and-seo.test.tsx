@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { generateJsonLd, generateToolMetadata } from '@/lib/seo';
 import toolConfig from '@/tool/tool.config';
 import { getPublicSiteUrl, templateMetadata } from '@/tool/template-metadata';
-import { notepadTool } from '@/tool/notepad-state';
+import { textDiffTool } from '@/tool/tool-definition';
 import { ToolCanvas } from '@/tool/components/tool-canvas';
 import { ToolSidebar } from '@/tool/components/tool-sidebar';
 import { ToolToolbar } from '@/tool/components/tool-toolbar';
@@ -92,40 +92,27 @@ describe('app and seo', () => {
   it('covers tool definition and helper exports', async () => {
     expect(cn('a', undefined, 'b', false, null, 'c')).toBe('a b c');
     expect(getPublicSiteUrl()).toBe('http://localhost:3000');
-    expect(notepadTool.deserialize({ content: 'x' })).toEqual({
+    expect(textDiffTool.deserialize({ original: 'a', modified: 'b', mode: 'side-by-side' })).toEqual({
       success: true,
-      data: { content: 'x', title: '' },
+      data: { original: 'a', modified: 'b', mode: 'side-by-side' },
     });
-    expect(notepadTool.deserialize({ nope: true })).toEqual({
+    expect(textDiffTool.deserialize({ nope: true })).toEqual({
       success: false,
-      error: 'Invalid data format: expected { content: string, title?: string }',
+      error: 'Invalid data format: expected valid diff state',
     });
-    expect(notepadTool.serialize({ content: 'x' })).toContain('"content": "x"');
-    expect(notepadTool.deserialize({ content: 'x', title: 'My Note' })).toEqual({
-      success: true,
-      data: { content: 'x', title: 'My Note' },
-    });
-    const exporters = (notepadTool as { exporters?: Array<{ loader: ExporterLoader }> }).exporters ?? [];
-    expect(exporters).toHaveLength(4);
-    const first = exporters[0];
-    expect(first).toBeDefined();
-    if (!first) throw new Error('missing exporter');
-    const png = await (first.loader as ExporterLoader)();
-    const resolved = 'default' in png ? png.default : png.exporter;
-    expect(resolved.format).toBe('png');
+    expect(textDiffTool.serialize({ original: 'a', modified: 'b', mode: 'inline' })).toContain('"original":"a"');
   });
 
   it('renders tool components', () => {
     render(
       <>
-        <ToolToolbar />
-        <ToolSidebar text="Hello world" fontSize={16} onFontSizeChange={() => {}} />
-        <ToolCanvas text="" fontSize={16} />
+        <ToolToolbar state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} onClear={() => {}} />
+        <ToolSidebar state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} />
+        <ToolCanvas state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} />
       </>
     );
 
     expect(screen.getByRole('link', { name: 'Open help page' })).toBeInTheDocument();
-    expect(screen.getByText('11')).toBeInTheDocument(); // char count for "Hello world"
-    expect(screen.getByRole('application', { name: 'Notepad canvas' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Original text')).toBeInTheDocument();
   });
 });

@@ -1,91 +1,57 @@
 import type { Tool, DeserializeResult } from '@itsjust/core';
 import toolConfig from './tool.config';
-import type { ToolState, ConversionMode } from './types';
-import yaml from 'js-yaml';
+import type { ToolState } from './types';
+import { isToolState } from './diff';
 
-function isToolState(value: unknown): value is ToolState {
-  if (typeof value !== 'object' || value === null) return false;
-  const v = value as Partial<ToolState>;
-  return (
-    typeof v.input === 'string' &&
-    typeof v.output === 'string' &&
-    (v.mode === 'yaml-to-json' || v.mode === 'json-to-yaml')
-  );
-}
-
-export const yamlToJsonTool: Tool<ToolState> = {
+export const textDiffTool: Tool<ToolState> = {
   id: toolConfig.id,
   name: toolConfig.name,
   version: toolConfig.version,
   config: toolConfig,
   initialState: {
-    input: 'name: John Doe\nage: 30\nskills:\n  - JavaScript\n  - TypeScript\nactive: true',
-    output: '',
-    mode: 'yaml-to-json',
-    indent: 2,
-    error: null,
-    autoConvert: true,
+    original: '',
+    modified: '',
+    mode: 'side-by-side',
   },
   serialize: (state) => JSON.stringify(state),
   deserialize: (data): DeserializeResult<ToolState> => {
     try {
       if (isToolState(data)) {
-        return { success: true, data: data };
+        return { success: true, data: { original: data.original, modified: data.modified, mode: data.mode } };
       }
-      return { success: false, error: 'Invalid data format: expected valid converter state' };
+      return { success: false, error: 'Invalid data format: expected valid diff state' };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Deserialization error';
       return { success: false, error: `Failed to deserialize state: ${message}` };
     }
   },
-  exporters: [
-    { format: 'png', loader: () => import('./exporters/png') },
-    { format: 'jpeg', loader: () => import('./exporters/jpeg') },
-    { format: 'webp', loader: () => import('./exporters/webp') },
-    { format: 'pdf', loader: () => import('./exporters/pdf') },
-  ],
 };
 
-/** Convert YAML↔JSON based on state.mode. Not part of the Tool contract. */
-export function convert(state: ToolState): ToolState {
-    if (!state.input.trim()) {
-      return { ...state, output: '', error: null };
-    }
-
-    try {
-      if (state.mode === 'yaml-to-json') {
-        const parsed = yaml.load(state.input);
-        const output = JSON.stringify(parsed, null, state.indent);
-        return { ...state, output, error: null };
-      } else {
-        const parsed = JSON.parse(state.input);
-        const output = yaml.dump(parsed, { indent: state.indent });
-        return { ...state, output, error: null };
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Conversion error';
-      return { ...state, output: '', error: message };
-    }
-}
-
-// Back-compat alias for existing tests using the class-based name.
-export class YamlToJsonToolDefinition {
-  initialState: ToolState = yamlToJsonTool.initialState;
+/** Class-based helper retained for tests and non-hook consumers. */
+export class TextDiffToolDefinition {
+  id = toolConfig.id;
+  name = toolConfig.name;
+  version = toolConfig.version;
+  config = toolConfig;
+  initialState: ToolState = textDiffTool.initialState;
+  exporters = textDiffTool.exporters;
 
   serialize(state: ToolState): string {
-    return yamlToJsonTool.serialize(state);
+    return textDiffTool.serialize(state);
   }
 
-  deserialize(serialized: string): DeserializeResult<ToolState> {
+  deserialize(serializedOrParsed: string | unknown): DeserializeResult<ToolState> {
     try {
-      const parsed: unknown = JSON.parse(serialized);
-      return yamlToJsonTool.deserialize(parsed);
+      const parsed: unknown =
+        typeof serializedOrParsed === 'string' ? JSON.parse(serializedOrParsed) : serializedOrParsed;
+      return textDiffTool.deserialize(parsed);
     } catch {
-      return { success: false, error: 'Invalid data format: expected valid converter state' };
+      return { success: false, error: 'Invalid data format: expected valid diff state' };
     }
   }
-
-  convert(state: ToolState): ToolState {
-    return convert(state);
-  }
 }
+
+// Back-compat aliases used by earlier tests/exports
+export const yamlToJsonTool = textDiffTool;
+export { textDiffTool as diffToolDefinition };
+export { TextDiffToolDefinition as YamlToJsonToolDefinition };

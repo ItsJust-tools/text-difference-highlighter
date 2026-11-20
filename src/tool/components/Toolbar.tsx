@@ -1,48 +1,69 @@
+'use client';
+
 import React from 'react';
-import { ToolState } from '../types';
+import Link from 'next/link';
+import type { ToolState } from '../types';
+import { SAMPLE_MODIFIED, SAMPLE_ORIGINAL } from '../types';
 
 interface ToolbarProps {
   state: ToolState;
   onChange: (state: ToolState) => void;
-  onConvert: () => void;
   onClear: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ state, onChange, onConvert, onClear }) => {
+export function TextDiffToolbar({ state, onChange, onClear }: ToolbarProps) {
+  const loadSample = () => {
+    onChange({ ...state, original: SAMPLE_ORIGINAL, modified: SAMPLE_MODIFIED });
+  };
+
+  const copyUnified = async () => {
+    const { toUnifiedDiffText } = await import('../diff');
+    await navigator.clipboard.writeText(toUnifiedDiffText(state.original, state.modified));
+  };
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-2" role="group" aria-label="Diff mode">
+        <Link href="/help" className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Open help page">
+          Help
+        </Link>
         <button
-          onClick={() => onChange({ ...state, mode: 'yaml-to-json', input: state.output, output: '' })}
+          onClick={() => onChange({ ...state, mode: 'side-by-side' })}
+          aria-pressed={state.mode === 'side-by-side'}
           className={`px-3 py-1.5 text-xs font-medium rounded-md ${
-            state.mode === 'yaml-to-json'
+            state.mode === 'side-by-side'
               ? 'bg-indigo-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          YAML to JSON
+          Side by side
         </button>
         <button
-          onClick={() => onChange({ ...state, mode: 'json-to-yaml', input: state.output, output: '' })}
+          onClick={() => onChange({ ...state, mode: 'inline' })}
+          aria-pressed={state.mode === 'inline'}
           className={`px-3 py-1.5 text-xs font-medium rounded-md ${
-            state.mode === 'json-to-yaml'
+            state.mode === 'inline'
               ? 'bg-indigo-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          JSON to YAML
+          Inline
         </button>
       </div>
 
       <div className="flex items-center gap-2">
-        {!state.autoConvert && (
-          <button
-            onClick={onConvert}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700"
-          >
-            Convert
-          </button>
-        )}
+        <button
+          onClick={loadSample}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          Load sample
+        </button>
+        <button
+          onClick={copyUnified}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          Copy unified diff
+        </button>
         <button
           onClick={onClear}
           className="px-3 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -52,4 +73,4 @@ export const Toolbar: React.FC<ToolbarProps> = ({ state, onChange, onConvert, on
       </div>
     </div>
   );
-};
+}

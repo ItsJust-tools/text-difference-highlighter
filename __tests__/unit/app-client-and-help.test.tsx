@@ -52,26 +52,29 @@ vi.mock('@itsjust/core', () => ({
   }),
 }));
 
-vi.mock('@/tool', () => ({
-  toolConfig: {
-    id: 'simple-notepad',
-    name: 'Notepad',
-    version: '1.0.0',
-    features: { sidebar: true },
-    theme: { brand: 'Notepad' },
-  },
-  templateBaseVersion: '1.1.0',
-  ToolCanvas: ({ text }: { text: string }) => <div>canvas:{text}</div>,
-  ToolToolbar: () => <div>toolbar</div>,
-  ToolSidebar: ({ text }: { text: string }) => <div>sidebar:{text}</div>,
-}));
-
-vi.mock('@/tool/notepad-state', () => ({
-  notepadTool: {
-    serialize: (state: unknown) => JSON.stringify(state),
-    deserialize: () => ({ success: true, data: { content: 'From Shared Url', title: '' } }),
-  },
-}));
+vi.mock('@/tool', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    TextDiffToolDefinition: class {
+      serialize = (state: unknown) => JSON.stringify(state);
+      deserialize = () => ({ success: true, data: { original: 'From Shared Url', modified: '', mode: 'side-by-side' } });
+    },
+    toolConfig: {
+      id: 'simple-notepad',
+      name: 'Notepad',
+      version: '1.0.0',
+      features: { sidebar: true },
+      theme: { brand: 'Notepad' },
+    },
+    templateBaseVersion: '1.1.0',
+    ToolCanvas: ({ text, state }: { text?: string; state?: unknown }) => (
+      <div>canvas:{typeof state === 'object' && state !== null && 'original' in (state as object) ? String((state as { original: string }).original) : text}</div>
+    ),
+    ToolToolbar: () => <div>toolbar</div>,
+    ToolSidebar: () => <div>sidebar</div>,
+  };
+});
 
 describe('app client and help page', () => {
   beforeEach(() => {
