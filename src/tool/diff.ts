@@ -119,22 +119,42 @@ export function diffLines(original: string, modified: string): LineChange[] {
       origLine++;
       modLine++;
     } else if (dp[i + 1]![j]! >= dp[i]![j + 1]!) {
-      changes.push({ type: 'removed', text: a[i]!, lineNumberOriginal: origLine, lineNumberModified: null });
+      changes.push({
+        type: 'removed',
+        text: a[i]!,
+        lineNumberOriginal: origLine,
+        lineNumberModified: null,
+      });
       i++;
       origLine++;
     } else {
-      changes.push({ type: 'added', text: b[j]!, lineNumberOriginal: null, lineNumberModified: modLine });
+      changes.push({
+        type: 'added',
+        text: b[j]!,
+        lineNumberOriginal: null,
+        lineNumberModified: modLine,
+      });
       j++;
       modLine++;
     }
   }
   while (i < n) {
-    changes.push({ type: 'removed', text: a[i]!, lineNumberOriginal: origLine, lineNumberModified: null });
+    changes.push({
+      type: 'removed',
+      text: a[i]!,
+      lineNumberOriginal: origLine,
+      lineNumberModified: null,
+    });
     i++;
     origLine++;
   }
   while (j < m) {
-    changes.push({ type: 'added', text: b[j]!, lineNumberOriginal: null, lineNumberModified: modLine });
+    changes.push({
+      type: 'added',
+      text: b[j]!,
+      lineNumberOriginal: null,
+      lineNumberModified: modLine,
+    });
     j++;
     modLine++;
   }

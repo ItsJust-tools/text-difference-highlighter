@@ -13,7 +13,8 @@ interface CanvasProps {
 const spanClass: Record<WordSpan['type'], string> = {
   equal: '',
   inserted: 'bg-green-200 text-green-900 dark:bg-green-900/60 dark:text-green-100 rounded px-0.5',
-  deleted: 'bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100 rounded px-0.5',
+  deleted:
+    'bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100 rounded px-0.5',
 };
 
 const lineClass: Record<LineChange['type'], string> = {
@@ -38,7 +39,11 @@ function WordDiffView({ original, modified }: { original: string; modified: stri
 function LineDiffView({ original, modified }: { original: string; modified: string }) {
   const changes = useMemo(() => diffLines(original, modified), [original, modified]);
   return (
-    <div className="flex-1 overflow-auto font-mono text-sm leading-6" role="list" aria-label="Line diff">
+    <div
+      className="flex-1 overflow-auto font-mono text-sm leading-6"
+      role="list"
+      aria-label="Line diff"
+    >
       {changes.map((change, idx) => (
         <div
           key={idx}
@@ -76,9 +81,18 @@ function InlineDiffView({ original, modified }: { original: string; modified: st
 }
 
 export function TextDiffCanvas({ state, onChange, canvasRef }: CanvasProps) {
-  const stats = useMemo(() => computeStats(state.original, state.modified), [state.original, state.modified]);
-  const unified = useMemo(() => toUnifiedDiffText(state.original, state.modified), [state.original, state.modified]);
-  const inlineText = useMemo(() => toInlineText(state.original, state.modified), [state.original, state.modified]);
+  const stats = useMemo(
+    () => computeStats(state.original, state.modified),
+    [state.original, state.modified]
+  );
+  const unified = useMemo(
+    () => toUnifiedDiffText(state.original, state.modified),
+    [state.original, state.modified]
+  );
+  const inlineText = useMemo(
+    () => toInlineText(state.original, state.modified),
+    [state.original, state.modified]
+  );
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);

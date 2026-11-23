@@ -17,7 +17,10 @@ export const textDiffTool: Tool<ToolState> = {
   deserialize: (data): DeserializeResult<ToolState> => {
     try {
       if (isToolState(data)) {
-        return { success: true, data: { original: data.original, modified: data.modified, mode: data.mode } };
+        return {
+          success: true,
+          data: { original: data.original, modified: data.modified, mode: data.mode },
+        };
       }
       return { success: false, error: 'Invalid data format: expected valid diff state' };
     } catch (err) {
@@ -43,7 +46,9 @@ export class TextDiffToolDefinition {
   deserialize(serializedOrParsed: string | unknown): DeserializeResult<ToolState> {
     try {
       const parsed: unknown =
-        typeof serializedOrParsed === 'string' ? JSON.parse(serializedOrParsed) : serializedOrParsed;
+        typeof serializedOrParsed === 'string'
+          ? JSON.parse(serializedOrParsed)
+          : serializedOrParsed;
       return textDiffTool.deserialize(parsed);
     } catch {
       return { success: false, error: 'Invalid data format: expected valid diff state' };

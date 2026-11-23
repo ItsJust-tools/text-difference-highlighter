@@ -133,7 +133,9 @@ export default function ToolClient() {
 
   const statusBarContent = (
     <>
-      <span className={`status-slot status-slot-state ${tool.state.isDirty ? 'status-unsaved' : 'status-saved'}`}>
+      <span
+        className={`status-slot status-slot-state ${tool.state.isDirty ? 'status-unsaved' : 'status-saved'}`}
+      >
         {tool.state.isDirty ? (
           <>
             <span className="status-saving-dot" />
@@ -146,7 +148,9 @@ export default function ToolClient() {
         )}
       </span>
       <span className="status-slot status-slot-tool-version">Tool v{toolConfig.version}</span>
-      <span className="status-slot status-slot-template-version">Template v{templateBaseVersion}</span>
+      <span className="status-slot status-slot-template-version">
+        Template v{templateBaseVersion}
+      </span>
     </>
   );
 
@@ -171,11 +175,17 @@ export default function ToolClient() {
     >
       {hasLegacySections
         ? (() => {
-            const ToolbarSection = ToolShellCompat.Toolbar as ComponentType<{ children?: ReactNode }>;
+            const ToolbarSection = ToolShellCompat.Toolbar as ComponentType<{
+              children?: ReactNode;
+            }>;
             const BodySection = ToolShellCompat.Body as ComponentType<{ children?: ReactNode }>;
-            const SidebarSection = ToolShellCompat.Sidebar as ComponentType<{ children?: ReactNode }>;
+            const SidebarSection = ToolShellCompat.Sidebar as ComponentType<{
+              children?: ReactNode;
+            }>;
             const CanvasSection = ToolShellCompat.Canvas as ComponentType<{ children?: ReactNode }>;
-            const StatusBarSection = ToolShellCompat.StatusBar as ComponentType<{ children?: ReactNode }>;
+            const StatusBarSection = ToolShellCompat.StatusBar as ComponentType<{
+              children?: ReactNode;
+            }>;
             return (
               <>
                 <ToolbarSection>{toolbarContent}</ToolbarSection>

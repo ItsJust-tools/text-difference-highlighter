@@ -58,7 +58,10 @@ vi.mock('@/tool', async (importOriginal) => {
     ...actual,
     TextDiffToolDefinition: class {
       serialize = (state: unknown) => JSON.stringify(state);
-      deserialize = () => ({ success: true, data: { original: 'From Shared Url', modified: '', mode: 'side-by-side' } });
+      deserialize = () => ({
+        success: true,
+        data: { original: 'From Shared Url', modified: '', mode: 'side-by-side' },
+      });
     },
     toolConfig: {
       id: 'simple-notepad',
@@ -69,7 +72,12 @@ vi.mock('@/tool', async (importOriginal) => {
     },
     templateBaseVersion: '1.1.0',
     ToolCanvas: ({ text, state }: { text?: string; state?: unknown }) => (
-      <div>canvas:{typeof state === 'object' && state !== null && 'original' in (state as object) ? String((state as { original: string }).original) : text}</div>
+      <div>
+        canvas:
+        {typeof state === 'object' && state !== null && 'original' in (state as object)
+          ? String((state as { original: string }).original)
+          : text}
+      </div>
     ),
     ToolToolbar: () => <div>toolbar</div>,
     ToolSidebar: () => <div>sidebar</div>,

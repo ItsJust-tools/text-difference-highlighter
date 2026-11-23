@@ -32,11 +32,15 @@ export function TextDiffSidebar({ state, onChange }: SidebarProps) {
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Original unchanged</dt>
-            <dd className="font-mono text-gray-700 dark:text-gray-300">{stats.unchangedPercentageOriginal}%</dd>
+            <dd className="font-mono text-gray-700 dark:text-gray-300">
+              {stats.unchangedPercentageOriginal}%
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Modified unchanged</dt>
-            <dd className="font-mono text-gray-700 dark:text-gray-300">{stats.unchangedPercentageModified}%</dd>
+            <dd className="font-mono text-gray-700 dark:text-gray-300">
+              {stats.unchangedPercentageModified}%
+            </dd>
           </div>
         </dl>
       </div>
@@ -45,13 +49,17 @@ export function TextDiffSidebar({ state, onChange }: SidebarProps) {
         <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Export</h3>
         <div className="space-y-2">
           <button
-            onClick={() => navigator.clipboard.writeText(toUnifiedDiffText(state.original, state.modified))}
+            onClick={() =>
+              navigator.clipboard.writeText(toUnifiedDiffText(state.original, state.modified))
+            }
             className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Copy result as unified diff text
           </button>
           <button
-            onClick={() => navigator.clipboard.writeText(toInlineText(state.original, state.modified))}
+            onClick={() =>
+              navigator.clipboard.writeText(toInlineText(state.original, state.modified))
+            }
             className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Copy inline annotated result
@@ -63,7 +71,9 @@ export function TextDiffSidebar({ state, onChange }: SidebarProps) {
         <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Samples</h3>
         <div className="space-y-2">
           <button
-            onClick={() => onChange({ ...state, original: SAMPLE_ORIGINAL, modified: SAMPLE_MODIFIED })}
+            onClick={() =>
+              onChange({ ...state, original: SAMPLE_ORIGINAL, modified: SAMPLE_MODIFIED })
+            }
             className="w-full text-left px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             Load sample text
@@ -80,8 +90,18 @@ export function TextDiffSidebar({ state, onChange }: SidebarProps) {
       <div>
         <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Legend</h3>
         <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
-          <li><span className="inline-block px-1 rounded bg-green-200 text-green-900 dark:bg-green-900/60 dark:text-green-100">green</span> — inserted in modified text</li>
-          <li><span className="inline-block px-1 rounded bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100">red</span> — deleted from original text</li>
+          <li>
+            <span className="inline-block px-1 rounded bg-green-200 text-green-900 dark:bg-green-900/60 dark:text-green-100">
+              green
+            </span>{' '}
+            — inserted in modified text
+          </li>
+          <li>
+            <span className="inline-block px-1 rounded bg-red-200 text-red-900 line-through dark:bg-red-900/60 dark:text-red-100">
+              red
+            </span>{' '}
+            — deleted from original text
+          </li>
         </ul>
       </div>
     </div>

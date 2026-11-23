@@ -24,7 +24,11 @@ export function TextDiffToolbar({ state, onChange, onClear }: ToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-2" role="group" aria-label="Diff mode">
-        <Link href="/help" className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Open help page">
+        <Link
+          href="/help"
+          className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+          aria-label="Open help page"
+        >
           Help
         </Link>
         <button

@@ -92,7 +92,9 @@ describe('app and seo', () => {
   it('covers tool definition and helper exports', async () => {
     expect(cn('a', undefined, 'b', false, null, 'c')).toBe('a b c');
     expect(getPublicSiteUrl()).toBe('http://localhost:3000');
-    expect(textDiffTool.deserialize({ original: 'a', modified: 'b', mode: 'side-by-side' })).toEqual({
+    expect(
+      textDiffTool.deserialize({ original: 'a', modified: 'b', mode: 'side-by-side' })
+    ).toEqual({
       success: true,
       data: { original: 'a', modified: 'b', mode: 'side-by-side' },
     });
@@ -100,15 +102,27 @@ describe('app and seo', () => {
       success: false,
       error: 'Invalid data format: expected valid diff state',
     });
-    expect(textDiffTool.serialize({ original: 'a', modified: 'b', mode: 'inline' })).toContain('"original":"a"');
+    expect(textDiffTool.serialize({ original: 'a', modified: 'b', mode: 'inline' })).toContain(
+      '"original":"a"'
+    );
   });
 
   it('renders tool components', () => {
     render(
       <>
-        <ToolToolbar state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} onClear={() => {}} />
-        <ToolSidebar state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} />
-        <ToolCanvas state={{ original: '', modified: '', mode: 'side-by-side' }} onChange={() => {}} />
+        <ToolToolbar
+          state={{ original: '', modified: '', mode: 'side-by-side' }}
+          onChange={() => {}}
+          onClear={() => {}}
+        />
+        <ToolSidebar
+          state={{ original: '', modified: '', mode: 'side-by-side' }}
+          onChange={() => {}}
+        />
+        <ToolCanvas
+          state={{ original: '', modified: '', mode: 'side-by-side' }}
+          onChange={() => {}}
+        />
       </>
     );
 
